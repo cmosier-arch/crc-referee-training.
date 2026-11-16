@@ -1,0 +1,216 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CRC Two-Person Ref Transition</title>
+<style>
+:root{--b:#2c3785;--g:#fad606;--bg:#f5f7fb;--mut:#646b78}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Arial,sans-serif;color:#20242b}
+.w{max-width:1080px;margin:22px auto;padding:0 16px}.tabs,.ctrl{display:flex;gap:8px;flex-wrap:wrap}
+button{font:inherit;font-weight:800;padding:11px 15px;border-radius:10px;border:1px solid #d8dce5;background:white;cursor:pointer}
+.tab.on{background:var(--b);color:white}.head{display:flex;justify-content:space-between;gap:15px;margin-top:14px}
+h2{margin:0;color:var(--b)}.sub{font-size:14px;color:var(--mut);margin-top:6px}.play,.banner{background:var(--g);color:var(--b)}
+.banner{border:2px solid var(--b);border-radius:10px;padding:11px 14px;font-weight:900;margin:12px 0}
+.card{background:white;border:1px solid #d8dce5;border-radius:14px;padding:10px}svg{display:block;width:100%;height:auto}
+.notes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.note{background:white;border:1px solid #d8dce5;border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.45}.note b{color:var(--b)}
+@media(max-width:700px){.head{flex-direction:column}.notes{grid-template-columns:1fr}}</style></head>
+<body><div class="w">
+<div class="tabs"><button class="tab on" data-s="tip">1 · Opening Tip</button><button class="tab" data-s="start">2 · Half-Court Setup</button><button class="tab" data-s="change">3 · Change of Possession</button></div>
+<div class="head"><div><h2 id="title"></h2><div class="sub" id="sub"></div></div><div class="ctrl"><button class="play" id="play">▶ Play</button><button id="reset">↻ Restart</button></div></div>
+<div class="banner" id="banner"></div>
+<div class="card"><svg viewBox="0 0 1000 570">
+<rect x="50" y="30" width="900" height="490" fill="#fbf7ee" stroke="#2c3785" stroke-width="4"/>
+<line x1="500" y1="30" x2="500" y2="520" stroke="#2c3785" stroke-width="3"/><circle cx="500" cy="275" r="65" fill="none" stroke="#2c3785" stroke-width="3"/>
+<line x1="90" y1="225" x2="90" y2="325" stroke="#2c3785" stroke-width="7"/><circle cx="115" cy="275" r="11" fill="none" stroke="#2c3785" stroke-width="4"/>
+<line x1="910" y1="225" x2="910" y2="325" stroke="#2c3785" stroke-width="7"/><circle cx="885" cy="275" r="11" fill="none" stroke="#2c3785" stroke-width="4"/>
+<rect x="50" y="180" width="190" height="190" fill="none" stroke="#2c3785" stroke-width="3"/><path d="M240 180A95 95 0 0 1 240 370" fill="none" stroke="#2c3785" stroke-width="3"/>
+<rect x="760" y="180" width="190" height="190" fill="none" stroke="#2c3785" stroke-width="3"/><path d="M760 180A95 95 0 0 0 760 370" fill="none" stroke="#2c3785" stroke-width="3"/>
+<!-- straight ref lanes -->
+<line id="laneA" x1="115" y1="440" x2="650" y2="440" stroke="#fad606" stroke-width="8" opacity="0" stroke-dasharray="12 12"/>
+<line id="laneB" x1="420" y1="75" x2="885" y2="75" stroke="#2c3785" stroke-width="8" opacity="0" stroke-dasharray="12 12"/>
+<g id="players"></g><g id="tipPlayers" opacity="0">
+<circle cx="475" cy="275" r="19" fill="#fad606" stroke="#2c3785" stroke-width="3"/><text x="475" y="279" text-anchor="middle" font-size="10" font-weight="900" fill="#2c3785">O</text>
+<circle cx="525" cy="275" r="19" fill="#2c3785" stroke="#2c3785" stroke-width="3"/><text x="525" y="279" text-anchor="middle" font-size="10" font-weight="900" fill="white">D</text>
+</g><circle id="tipBall" cx="500" cy="275" r="10" fill="#df8428" stroke="#222" stroke-width="2" opacity="0"/>
+<g id="tipRef"><circle r="27" fill="#fad606" stroke="#2c3785" stroke-width="4"/><text text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="900" fill="#2c3785">A</text></g>
+<g id="tipRefLab"><rect x="-58" y="34" width="116" height="38" rx="8" fill="#fad606" stroke="#2c3785" stroke-width="2"/><text y="50" text-anchor="middle" font-size="11" font-weight="900" fill="#2c3785">REF A</text><text y="65" text-anchor="middle" font-size="11" font-weight="900" fill="#2c3785">TOSS</text></g>
+<g id="otherRef"><circle r="27" fill="white" stroke="#2c3785" stroke-width="4"/><text text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="900" fill="#2c3785">B</text></g>
+<g id="otherRefLab"><rect x="-58" y="34" width="116" height="38" rx="8" fill="white" stroke="#2c3785" stroke-width="2"/><text y="50" text-anchor="middle" font-size="11" font-weight="900" fill="#2c3785">REF B</text><text id="otherRole" y="65" text-anchor="middle" font-size="11" font-weight="900" fill="#2c3785">READY</text></g><circle id="ball" r="10" fill="#df8428" stroke="#222" stroke-width="2"/>
+<!-- ref A -->
+<g id="A"><circle r="27" fill="#fad606" stroke="#2c3785" stroke-width="4"/><text text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="900" fill="#2c3785">A</text></g>
+<g id="Alab"><rect x="-58" y="34" width="116" height="38" rx="8" fill="#fad606" stroke="#2c3785" stroke-width="2"/><text id="Atxt" y="50" text-anchor="middle" font-size="11" font-weight="900" fill="#2c3785">REF A</text><text id="Arole" y="65" text-anchor="middle" font-size="11" font-weight="900" fill="#2c3785">LEAD</text></g>
+<!-- ref B -->
+<g id="B"><circle r="27" fill="white" stroke="#2c3785" stroke-width="4"/><text text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="900" fill="#2c3785">B</text></g>
+<g id="Blab"><rect x="-58" y="34" width="116" height="38" rx="8" fill="white" stroke="#2c3785" stroke-width="2"/><text y="50" text-anchor="middle" font-size="11" font-weight="900" fill="#2c3785">REF B</text><text id="Brole" y="65" text-anchor="middle" font-size="11" font-weight="900" fill="#2c3785">TRAIL</text></g>
+<!-- possession change -->
+<g id="msg" opacity="0"><rect x="350" y="238" width="300" height="72" rx="12" fill="white" stroke="#fad606" stroke-width="4"/><text x="500" y="264" text-anchor="middle" font-size="15" font-weight="900" fill="#2c3785">CHANGE OF POSSESSION</text><text x="500" y="287" text-anchor="middle" font-size="13" font-weight="800" fill="#2c3785">TRAIL → LEAD • LEAD → TRAIL</text></g>
+</svg></div>
+<div class="notes"><div class="note" id="nA"></div><div class="note" id="nB"></div></div>
+</div>
+<script>
+const Q=s=>document.querySelector(s),
+tabs=[...document.querySelectorAll('.tab')],
+A=Q('#A'),B=Q('#B'),Al=Q('#Alab'),Bl=Q('#Blab'),
+ball=Q('#ball'),ps=Q('#players'),msg=Q('#msg'),
+la=Q('#laneA'),lb=Q('#laneB'),
+tipPlayers=Q('#tipPlayers'),tipBall=Q('#tipBall'),
+tipRef=Q('#tipRef'),tipRefLab=Q('#tipRefLab'),
+otherRef=Q('#otherRef'),otherRefLab=Q('#otherRefLab');
+
+let scene='tip',raf,running=false,nodes=[];
+
+// Half-court positions: first five are gold, last five are blue.
+const P=[[180,275],[210,155],[225,395],[335,205],[350,345],
+         [140,275],[180,175],[200,375],[305,225],[325,325]];
+
+for(let i=0;i<10;i++){
+  let g=document.createElementNS('http://www.w3.org/2000/svg','g'),
+      c=document.createElementNS('http://www.w3.org/2000/svg','circle'),
+      t=document.createElementNS('http://www.w3.org/2000/svg','text'),
+      o=i<5;
+  c.setAttribute('r',18); c.setAttribute('fill',o?'#fad606':'#2c3785');
+  c.setAttribute('stroke','#2c3785'); c.setAttribute('stroke-width',3);
+  t.setAttribute('text-anchor','middle'); t.setAttribute('dominant-baseline','central');
+  t.setAttribute('font-size',10); t.setAttribute('font-weight',900);
+  t.setAttribute('fill',o?'#2c3785':'white'); t.textContent=o?'O':'D';
+  g.append(c,t); ps.append(g); nodes.push(g);
+}
+const xy=(g,x,y)=>g.setAttribute('transform',`translate(${x} ${y})`);
+const mix=(a,b,t)=>a+(b-a)*t;
+function labs(){Al.setAttribute('transform',A.getAttribute('transform'));Bl.setAttribute('transform',B.getAttribute('transform'))}
+function gameBall(x,y){ball.setAttribute('opacity',1);ball.setAttribute('cx',x);ball.setAttribute('cy',y)}
+function base(){
+ cancelAnimationFrame(raf);running=false;Q('#play').textContent='▶ Play';
+ msg.setAttribute('opacity',0);la.setAttribute('opacity',0);lb.setAttribute('opacity',0);
+ P.forEach((p,i)=>{nodes[i].setAttribute('opacity',1);xy(nodes[i],...p)});
+ gameBall(180,275);
+ xy(A,115,440);xy(B,420,75);labs();
+ Q('#Arole').textContent='LEAD';Q('#Brole').textContent='TRAIL';
+ tipPlayers.setAttribute('opacity',0);tipBall.setAttribute('opacity',0);
+ tipRef.setAttribute('opacity',0);tipRefLab.setAttribute('opacity',0);
+ otherRef.setAttribute('opacity',0);otherRefLab.setAttribute('opacity',0);
+ A.setAttribute('opacity',1);Al.setAttribute('opacity',1);B.setAttribute('opacity',1);Bl.setAttribute('opacity',1);
+}
+function setup(){
+ base();
+ if(scene==='tip'){
+   Q('#title').textContent='Beginning of the Game — Opening Tip';
+   Q('#sub').textContent='One official administers the jump ball. The other official is ready to become Lead in whichever direction possession goes.';
+   Q('#banner').textContent='NON-TOSSING OFFICIAL → LEAD • TOSSING OFFICIAL → TRAIL';
+   Q('#nA').innerHTML='<b>REF A — TOSS:</b> Administers the jump ball. After one team clearly gains possession, follows the play and becomes Trail.';
+   Q('#nB').innerHTML='<b>REF B — READY:</b> Watches the jump and immediately becomes Lead in the direction the team with possession attacks.';
+   ball.setAttribute('opacity',0);A.setAttribute('opacity',0);Al.setAttribute('opacity',0);B.setAttribute('opacity',0);Bl.setAttribute('opacity',0);
+   tipPlayers.setAttribute('opacity',0);
+   // Alternating teams around the circle instead of grouping teams on opposite ends.
+   const tipPos=[
+     [475,275], // gold jumper
+     [435,170], // gold
+     [565,380], // gold
+     [365,325], // gold
+     [635,225], // gold
+     [525,275], // blue jumper
+     [565,170], // blue
+     [435,380], // blue
+     [635,325], // blue
+     [365,225]  // blue
+   ];
+   nodes.forEach((n,i)=>xy(n,...tipPos[i]));
+   tipBall.setAttribute('opacity',1);
+   tipRef.setAttribute('opacity',1);tipRefLab.setAttribute('opacity',1);
+   otherRef.setAttribute('opacity',1);otherRefLab.setAttribute('opacity',1);
+   xy(tipRef,500,355);xy(tipRefLab,500,355);xy(otherRef,500,75);xy(otherRefLab,500,75);
+   tipBall.setAttribute('cx',500);tipBall.setAttribute('cy',315);
+   Q('#otherRole').textContent='READY';
+ } else if(scene==='start'){
+   Q('#title').textContent='Half-Court Setup';
+   Q('#sub').textContent='Both officials stay with the same offensive half of the court, working opposite sidelines.';
+   Q('#banner').textContent='LEAD ON THE BASELINE • TRAIL HIGHER ON THE OPPOSITE SIDE';
+   Q('#nA').innerHTML='<b>REF A — LEAD:</b> Starts near the baseline. Small adjustments are fine while keeping the play bracketed with the Trail.';
+   Q('#nB').innerHTML='<b>REF B — TRAIL:</b> Starts higher on the opposite sideline, keeping the play between the two officials.';
+   // Gold player #1 clearly possesses the one visible ball.
+   gameBall(197,275);
+ } else {
+   Q('#title').textContent='Change of Possession — Watch It Twice';
+   Q('#sub').textContent='Watch the ball change teams while the officials stay on the same straight sideline paths.';
+   Q('#banner').textContent='POSSESSION CHANGES TEAMS • TRAIL → LEAD • LEAD → TRAIL';
+   Q('#nA').innerHTML='<b>REF A:</b> Lead → Trail on the first change. On the second change, Trail → Lead. Same line both times.';
+   Q('#nB').innerHTML='<b>REF B:</b> Trail → Lead on the first change. On the second change, Lead → Trail. Same line both times.';
+   // Start with gold clearly possessing the ball.
+   gameBall(197,275);
+ }
+}
+function small(){
+ setup();running=true;Q('#play').textContent='⏸ Pause';let st=performance.now(),dur=2400;
+ function f(n){
+   let t=Math.min(1,(n-st)/dur),e=.5-.5*Math.cos(Math.PI*t);
+   // Gold ballhandler moves with the ball.
+   let bx=mix(197,332,e),by=mix(275,190,e);
+   ball.setAttribute('cx',bx);ball.setAttribute('cy',by);
+   xy(nodes[0],mix(180,315,e),mix(275,190,e));
+   xy(A,115,mix(440,390,e));xy(B,420,mix(75,105,e));labs();
+   if(t<1&&running)raf=requestAnimationFrame(f);else{running=false;Q('#play').textContent='▶ Play'}
+ }raf=requestAnimationFrame(f)
+}
+function change(){
+ setup();running=true;Q('#play').textContent='⏸ Pause';la.setAttribute('opacity',.7);lb.setAttribute('opacity',.7);
+ let st=performance.now(),dur=8400;
+ // End positions on the right half. Gold #1 and Blue #1 are the two clear ballhandlers on alternating possessions.
+ const far=P.map(p=>[1000-p[0],p[1]]);
+ function f(n){
+   let t=Math.min(1,(n-st)/dur);
+   if(t<.5){
+     // FIRST CHANGE: blue gains possession and attacks right.
+     let u=t/.5,e=.5-.5*Math.cos(Math.PI*u);
+     xy(A,mix(115,650,e),440);xy(B,mix(420,885,e),75);
+     nodes.forEach((q,i)=>xy(q,mix(P[i][0],far[i][0],e),mix(P[i][1],far[i][1],e)));
+     // Ball is attached to BLUE player #6 (nodes[5]) for the entire first possession.
+     let bx=mix(P[5][0],far[5][0],e)+17, by=mix(P[5][1],far[5][1],e);
+     ball.setAttribute('cx',bx);ball.setAttribute('cy',by);
+     Q('#Arole').textContent=u>.72?'NEW TRAIL':'LEAD';
+     Q('#Brole').textContent=u>.72?'NEW LEAD':'TRAIL';
+   }else{
+     // SECOND CHANGE: gold gains possession and attacks back left.
+     let u=(t-.5)/.5,e=.5-.5*Math.cos(Math.PI*u);
+     xy(A,mix(650,115,e),440);xy(B,mix(885,420,e),75);
+     nodes.forEach((q,i)=>xy(q,mix(far[i][0],P[i][0],e),mix(far[i][1],P[i][1],e)));
+     // Ball is now attached to GOLD player #1 (nodes[0]).
+     let bx=mix(far[0][0],P[0][0],e)+17, by=mix(far[0][1],P[0][1],e);
+     ball.setAttribute('cx',bx);ball.setAttribute('cy',by);
+     Q('#Arole').textContent=u>.72?'NEW LEAD':'TRAIL';
+     Q('#Brole').textContent=u>.72?'NEW TRAIL':'LEAD';
+   }
+   labs();
+   if(t<1&&running)raf=requestAnimationFrame(f);
+   else{running=false;Q('#play').textContent='▶ Play';la.setAttribute('opacity',0);lb.setAttribute('opacity',0)}
+ }raf=requestAnimationFrame(f)
+}
+function tip(){
+ setup();running=true;Q('#play').textContent='⏸ Pause';let st=performance.now(),dur=5400;
+ const tipStart=[[475,275],[435,170],[565,380],[365,325],[635,225],[525,275],[565,170],[435,380],[635,325],[365,225]];
+ const tipEnd=[[240,275],[285,170],[260,380],[345,325],[300,225],[210,275],[245,190],[230,365],[310,245],[295,315]];
+ function f(n){
+   let t=Math.min(1,(n-st)/dur);
+   if(t<.30){
+     // One neutral toss ball only.
+     let u=t/.30;
+     tipBall.setAttribute('cx',500);
+     tipBall.setAttribute('cy',315-160*Math.sin(Math.PI*u));
+   }else{
+     let e=Math.min(1,(t-.30)/.70);e=.5-.5*Math.cos(Math.PI*e);
+     nodes.forEach((q,i)=>xy(q,mix(tipStart[i][0],tipEnd[i][0],e),mix(tipStart[i][1],tipEnd[i][1],e)));
+     // BLUE wins the tip and attacks the LEFT basket — the basket it is facing.
+     let bx=mix(tipStart[5][0],tipEnd[5][0],e)-18;
+     let by=mix(tipStart[5][1],tipEnd[5][1],e);
+     tipBall.setAttribute('cx',bx);tipBall.setAttribute('cy',by);
+     // Non-tossing B gets ahead to the left baseline and becomes Lead;
+     // tossing A follows the play and becomes Trail.
+     xy(otherRef,mix(500,115,e),75);xy(otherRefLab,mix(500,115,e),75);
+     xy(tipRef,mix(500,350,e),mix(355,440,e));xy(tipRefLab,mix(500,350,e),mix(355,440,e));
+     Q('#otherRole').textContent=e>.55?'LEAD':'READY';
+   }
+   if(t<1&&running)raf=requestAnimationFrame(f);else{running=false;Q('#play').textContent='▶ Play'}
+ }raf=requestAnimationFrame(f)
+}
+tabs.forEach(b=>b.onclick=()=>{scene=b.dataset.s;tabs.forEach(z=>z.classList.toggle('on',z===b));setup()});
+Q('#play').onclick=()=>running?(cancelAnimationFrame(raf),running=false,Q('#play').textContent='▶ Play'):(scene==='change'?change():scene==='tip'?tip():small());
+Q('#reset').onclick=setup;
+setup();
+</script></body></html>

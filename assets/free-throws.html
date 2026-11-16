@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WVL Free Throw Setup — Interactive</title>
+<style>
+:root{--blue:#2c3785;--gold:#fad606;--bg:#f5f7fb;--card:#fff;--muted:#626977;--border:#d8dce5}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Arial,Helvetica,sans-serif;color:#20242b}
+.wrap{max-width:1050px;margin:24px auto;padding:0 16px}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+button{font:inherit;cursor:pointer}.tab,.ctrl{border:1px solid var(--border);background:#fff;border-radius:10px;padding:11px 15px;font-weight:700}
+.tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}.header{display:flex;justify-content:space-between;gap:15px;align-items:flex-start;margin-bottom:12px}
+h2{margin:0;color:var(--blue);font-size:22px}.desc{margin-top:6px;color:var(--muted);font-size:14px;line-height:1.4}.controls{display:flex;gap:8px}
+.play{background:var(--gold);color:var(--blue);border-color:var(--gold)}.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.fact{background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center}.fact b{display:block;color:var(--blue);font-size:17px}.fact span{font-size:12px;color:var(--muted)}
+.banner{background:var(--gold);border:2px solid var(--blue);color:var(--blue);border-radius:10px;padding:11px 14px;margin-bottom:12px;font-weight:800}
+.card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:10px;overflow:hidden}svg{display:block;width:100%;height:auto}
+.watch{margin-top:14px;background:#fff;border:2px solid var(--gold);border-radius:10px;padding:12px 14px}.watch b{color:var(--blue);font-size:14px}.watch div{margin-top:5px;font-size:14px;line-height:1.45}
+@media(max-width:700px){.header{flex-direction:column}.facts{grid-template-columns:1fr}.controls{width:100%}.controls button{flex:1}}
+</style></head>
+<body><div class="wrap">
+<div class="tabs">
+<button class="tab active" data-g="12">1st/2nd Grade</button>
+<button class="tab" data-g="34">3rd/4th Grade</button>
+<button class="tab" data-g="56">5th/6th Grade</button>
+</div>
+<div class="header"><div><h2 id="title"></h2><div id="desc" class="desc"></div></div>
+<div class="controls"><button id="play" class="ctrl play">▶ Show Shot</button><button id="reset" class="ctrl">↻ Restart</button></div></div>
+<div class="facts">
+<div class="fact"><b id="distance"></b><span>FREE THROW DISTANCE FROM BACKBOARD</span></div>
+<div class="fact"><b id="rebound"></b><span>REBOUNDER STARTING POSITION</span></div>
+<div class="fact"><b id="goal"></b><span>GOAL HEIGHT</span></div>
+</div>
+<div class="banner" id="banner"></div>
+<div class="card">
+<svg viewBox="0 0 920 610">
+<!-- half-court style zoomed lane -->
+<rect x="70" y="25" width="780" height="545" rx="5" fill="#fff" stroke="#2c3785" stroke-width="4"/>
+<!-- baseline/backboard/basket -->
+<line x1="70" y1="70" x2="850" y2="70" stroke="#2c3785" stroke-width="4"/>
+<line x1="390" y1="105" x2="530" y2="105" stroke="#2c3785" stroke-width="8"/>
+<circle cx="460" cy="132" r="12" fill="none" stroke="#2c3785" stroke-width="5"/>
+<!-- lane -->
+<line x1="325" y1="70" x2="325" y2="500" stroke="#2c3785" stroke-width="4"/>
+<line x1="595" y1="70" x2="595" y2="500" stroke="#2c3785" stroke-width="4"/>
+<!-- standard 15' free throw line, always visible -->
+<line x1="325" y1="500" x2="595" y2="500" stroke="#2c3785" stroke-width="4"/>
+<path d="M325 500 A135 135 0 0 0 595 500" fill="none" stroke="#2c3785" stroke-width="3" opacity=".28"/>
+<!-- block marks -->
+<line x1="325" y1="225" x2="350" y2="225" stroke="#2c3785" stroke-width="5"/>
+<line x1="570" y1="225" x2="595" y2="225" stroke="#2c3785" stroke-width="5"/>
+<text x="300" y="230" text-anchor="end" fill="#697080" font-size="12">BLOCK</text>
+<text x="620" y="230" fill="#697080" font-size="12">BLOCK</text>
+<!-- dynamic youth FT line -->
+<line id="ftline" x1="360" y1="365" x2="560" y2="365" stroke="#fad606" stroke-width="9"/>
+<text id="ftlabel" x="460" y="350" text-anchor="middle" fill="#2c3785" font-size="14" font-weight="900"></text>
+<!-- 15 ft lane boundary clarification -->
+<g id="laneClar"><rect x="642" y="465" width="178" height="62" rx="8" fill="#f5f7fb" stroke="#d8dce5"/>
+<text x="731" y="488" text-anchor="middle" fill="#2c3785" font-size="12" font-weight="900">LANE EXTENDS TO</text>
+<text x="731" y="508" text-anchor="middle" fill="#2c3785" font-size="12" font-weight="900">STANDARD 15' LINE</text></g>
+<!-- official -->
+<g id="official" transform="translate(690 315)"><circle r="19" fill="#fff" stroke="#2c3785" stroke-width="3"/><text text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="900" fill="#2c3785">REF</text></g>
+<text x="690" y="345" text-anchor="middle" fill="#2c3785" font-size="12" font-weight="800">WATCH LANE</text>
+<!-- players -->
+<g id="players"></g>
+<!-- shooter -->
+<g id="shooter"><circle r="21" fill="#fad606" stroke="#2c3785" stroke-width="3"/><text text-anchor="middle" dominant-baseline="central" font-size="12" font-weight="900" fill="#2c3785">FT</text></g>
+<!-- ball and shot path -->
+<circle id="ball" r="10" fill="#e28b2d" stroke="#2c3785" stroke-width="3"/>
+<path id="shotPath" d="" fill="none" stroke="#fad606" stroke-width="4" stroke-dasharray="8 8" opacity="0"/>
+</svg></div>
+<div class="watch"><b>WHAT THE OFFICIAL SHOULD WATCH</b><div id="watch"></div></div>
+</div>
+<script>
+(()=>{
+const NS='http://www.w3.org/2000/svg',tabs=[...document.querySelectorAll('.tab')],players=document.getElementById('players'),
+shooter=document.getElementById('shooter'),ball=document.getElementById('ball'),ftline=document.getElementById('ftline'),
+ftlabel=document.getElementById('ftlabel'),title=document.getElementById('title'),desc=document.getElementById('desc'),
+distance=document.getElementById('distance'),rebound=document.getElementById('rebound'),goal=document.getElementById('goal'),
+banner=document.getElementById('banner'),watch=document.getElementById('watch'),play=document.getElementById('play'),
+shotPath=document.getElementById('shotPath'); let grade='12',raf=null,running=false,nodes=[];
+
+const G={
+'12':{title:'1st/2nd Grade Free Throw',dist:'10 FEET',reb:'BELOW THE BLOCK',goal:'8 FEET',y:365,
+desc:'The shooter uses the WVL 10-foot free-throw distance. Rebounders begin below the block.',
+banner:'1st/2nd: 10 ft from the backboard • Rebounders start below the block • Maximum 3 on each side',
+watch:'Confirm the shooter is at the 10-foot WVL line and rebounders are starting below the block. Remember: the lane itself still extends to the standard 15-foot free-throw line.',
+spots:[[300,175],[620,175],[300,275],[620,275],[300,330],[620,330]]},
+'34':{title:'3rd/4th Grade Free Throw',dist:'12 FEET',reb:'BELOW THE BLOCK',goal:'9 FEET',y:420,
+desc:'The shooter moves back to the WVL 12-foot free-throw distance. Rebounders still begin below the block.',
+banner:'3rd/4th: 12 ft from the backboard • Rebounders start below the block • Maximum 3 on each side',
+watch:'Confirm the shooter is at the 12-foot WVL line and rebounders are starting below the block. The lane still extends to the standard 15-foot free-throw line.',
+spots:[[300,175],[620,175],[300,275],[620,275],[300,350],[620,350]]},
+'56':{title:'5th/6th Grade Free Throw',dist:'15 FEET',reb:'ABOVE THE BLOCK',goal:'10 FEET',y:500,
+desc:'5th/6th uses the standard 15-foot free-throw distance, and rebounders begin above the block.',
+banner:'5th/6th: 15 ft from the backboard • Rebounders start above the block • Maximum 3 on each side',
+watch:'Confirm the shooter is on the standard 15-foot line and rebounders begin above the block.',
+spots:[[300,265],[620,265],[300,330],[620,330],[300,395],[620,395]]}
+};
+
+function makePlayers(){
+ const teams=['D','D','O','O','D','D'];
+ for(let i=0;i<6;i++){
+  let q=document.createElementNS(NS,'g'),c=document.createElementNS(NS,'circle'),t=document.createElementNS(NS,'text');
+  const team=teams[i];
+  c.setAttribute('r',19);
+  c.setAttribute('fill',team==='D'?'#2c3785':'#fad606');
+  c.setAttribute('stroke','#2c3785');c.setAttribute('stroke-width',3);
+  t.setAttribute('text-anchor','middle');t.setAttribute('dominant-baseline','central');
+  t.setAttribute('font-size',11);t.setAttribute('font-weight',900);
+  t.setAttribute('fill',team==='D'?'white':'#2c3785');t.textContent=team;
+  q.append(c,t);players.append(q);nodes.push(q);
+ }
+} makePlayers();
+function setxy(q,x,y){q.setAttribute('transform',`translate(${x} ${y})`)}
+function setup(){
+ cancelAnimationFrame(raf);running=false;play.textContent='▶ Show Shot';shotPath.setAttribute('opacity',0);
+ const s=G[grade];title.textContent=s.title;desc.textContent=s.desc;distance.textContent=s.dist;rebound.textContent=s.reb;goal.textContent=s.goal;
+ banner.textContent=s.banner;watch.textContent=s.watch;ftline.setAttribute('y1',s.y);ftline.setAttribute('y2',s.y);
+ ftlabel.setAttribute('y',s.y-15);ftlabel.textContent=s.dist+' FREE THROW LINE';
+ setxy(shooter,460,s.y+34);ball.setAttribute('cx',460);ball.setAttribute('cy',s.y+10);
+ nodes.forEach((n,i)=>setxy(n,s.spots[i][0],s.spots[i][1]));
+}
+function run(){
+ setup();running=true;play.textContent='⏸ Pause';
+ const s=G[grade],startY=s.y+10,endY=132,st=performance.now(),dur=1900;
+ shotPath.setAttribute('d',`M460 ${startY} L460 ${endY}`);
+ shotPath.setAttribute('opacity',.55);
+ function f(now){
+  let t=Math.min(1,(now-st)/dur),e=1-Math.pow(1-t,2);
+  let y=startY+(endY-startY)*e;
+  ball.setAttribute('cx',460);ball.setAttribute('cy',y);
+  if(t<1&&running)raf=requestAnimationFrame(f);
+  else{running=false;play.textContent='▶ Show Shot';}
+ }
+ raf=requestAnimationFrame(f);
+}
+tabs.forEach(b=>b.onclick=()=>{grade=b.dataset.g;tabs.forEach(x=>x.classList.toggle('active',x===b));setup()});
+play.onclick=()=>running?(cancelAnimationFrame(raf),running=false,play.textContent='▶ Show Shot'):run();
+document.getElementById('reset').onclick=setup;setup();
+})();
+</script></body></html>
